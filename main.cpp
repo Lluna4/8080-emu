@@ -44,64 +44,68 @@ struct CPU
         //SP = 0xFFFF;
     }
 
-    byte fetch(u32 *cycles, MEM& memory)
+    byte fetch(MEM& memory)
     {
         byte data = memory[PC];
         PC++;
-        *cycles--;
         return data;
     }
 
     static constexpr byte
-        INS_LXI = 0x01;
+        INS_LXI_B = 0x01,
+        INS_STAX_B = 0x02,
+        INS_LXI_D = 0x11,
+        INS_LXI_H = 0x21,
+        INS_LXI_SP = 0x31;
 
     void execute(MEM& memory, u32 cycles)
     {
         while (cycles > 0)
         {
-            byte instruction = fetch(&cycles, memory);
-            cycles--;
+            byte instruction = fetch(memory);
+            byte u16L;
+            byte u16H;
 
             switch (instruction)
             {
-                case INS_LXI:
-                    byte B = fetch(&cycles, memory);
-                    cycles--;
-                    byte u16L = fetch(&cycles, memory);
-                    cycles--;
-                    byte u16H = fetch(&cycles, memory);
-                    cycles--;
-
-                    switch (B)
-                    {
-                        case 0x00:
-                            B = u16L;
-                            cycles--;
-                            C = u16H;
-                            cycles--;
-                            break;
-                        
-                        case 0x01:
-                            D = u16L;
-                            cycles--;
-                            E = u16H;
-                            cycles--;
-                            break;
-
-                        case 0x10:
-                            H = u16L;
-                            cycles--;
-                            L = u16H;
-                            cycles--;
-                            break;
-                        //case 0x11 for sp reg
-
-                        default:
-                            break;
-                    }
+                case INS_LXI_B:
+                    u16L = fetch(memory);
+                    u16H = fetch(memory);
+                    B = u16L;
+                    C = u16H;
+                    cycles -= 10;
                     break;
+                
+                case INS_STAX_B:
+                    u16L = C;
+                    u16H = B;
+                    memory.memory[(u16H << 8) | u16L] = A;
+                    cycles -= 7;
+                    break;
+
+                case INS_LXI_D:
+                    u16L = fetch(memory);
+                    u16H = fetch(memory);
+                    D = u16L;
+                    E = u16H;
+                    cycles -= 10;
+                    break;
+                
+                case INS_LXI_H:
+                    u16L = fetch(memory);
+                    u16H = fetch(memory);
+                    H = u16L;
+                    L = u16H;
+                    cycles -= 10;
+                    break;
+                case INS_LXI_SP:
+                    u16L = fetch(memory);
+                    u16H = fetch(memory);
+                    SP = (u16H << 8) | u16L; 
+                    cycles -= 10;
+                    break;
+                
             }
-            break;
         }
     }
 };
@@ -114,12 +118,24 @@ int main()
 
     cpu.reset();
     mem.init();
+    cpu.A = 'A';
+    cpu.B = 0x1;
+    cpu.C = 0x11;
 
-    mem.memory[0] = 0x01;
-    mem.memory[1] = 0x01;
-    mem.memory[2] = 'A';
-    mem.memory[3] = 'B';
-    cpu.execute(mem, 10);
+
+    mem.memory[0] = 0x02;
+    cpu.execute(mem, 7);
+
+    std::cout << "Registry breakdown: " << std::endl;
+    std::cout << "Accumulator: " << cpu.A << std::endl;
+    std::cout << "B: " << cpu.B << std::endl;
+    std::cout << "C: " << cpu.C << std::endl;
+    std::cout << "D: " << cpu.D << std::endl;
+    std::cout << "E: " << cpu.E << std::endl;
+    std::cout << "H: " << cpu.H << std::endl;
+    std::cout << "L: " << cpu.L << std::endl;
+    std::cout << "PC: " << cpu.PC << std::endl;
+    std::cout << "SP: " << cpu.SP << std::endl;
     
     return 0;
 }
