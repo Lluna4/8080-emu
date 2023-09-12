@@ -168,6 +168,8 @@ struct CPU
                     cycles -= 10;
                     break;
                 
+                default:
+                    break;
             }
         }
     }
@@ -202,11 +204,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    cpu.A = 'A';
-    cpu.B = 0xFE;
-    cpu.C = 0x01;
+    cpu.A = 0x03;
 
-    cpu.execute(mem, 60);
+    cpu.execute(mem, 32);
 
     std::cout << "Registry breakdown: " << std::endl;
     std::cout << "Accumulator: " << (int)cpu.A << std::endl;
