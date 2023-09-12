@@ -7,8 +7,10 @@
 #include <filesystem>
 #include <map>
 #include <format>
+#include <iomanip>
 
-std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"LXI D", 0x11}, {"LXI H", 0x21}, {"LXI SP", 0x31}};
+std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"STAX B", 0x02}, {"INX B", 0x03}, {"LXI D", 0x11}, {"STAX D", 0x12}, {"INX D", 0x13},
+{"LXI H", 0x21}, {"INX H", 0x23},{"LXI SP", 0x31}, {"INX SP", 0x33}};
 
 bool isNumber(std::string a)
 {
@@ -154,27 +156,23 @@ int main(int argc, char *argv[])
                 if (valores[2].back() == 'H')
                 {
                     valores[2].pop_back();
-                    std::string half = valores[2].substr(0, valores[2].length()/2);
-                    std::string otherHalf = valores[2].substr(valores[2].length()/2);
-                    if (isNumber(half) == true && isNumber(otherHalf) == true)
+                    std::string half = valores[2].substr(0, valores[2].length() / 2);
+                    std::string otherHalf = valores[2].substr(valores[2].length() / 2);
+                    
+                    if (isNumber(half) && isNumber(otherHalf)) 
                     {
-                        std::stringstream ss;
-                        std::stringstream ss2;
-                        ss << std::hex << half;
-                        ss2 << std::hex << otherHalf;
-
-                        char result;
-                        char result2;
-                        ss >> result;
-                        ss2 >> result2;
-                        if (ss.fail() == false && ss2.fail() == false)
-                        {
-                            to_write.push_back(result);
-                            to_write.push_back(result2);
-                        }
-                    }
+                        unsigned int result = std::stoul(half, nullptr, 16);
+                        unsigned int result2 = std::stoul(otherHalf, nullptr, 16);
+                        
+                        to_write.push_back(static_cast<char>(result));
+                        to_write.push_back(static_cast<char>(result2));
+                    } 
                 }
             }
+        }
+        else if (commands.contains(buf))
+        {
+            to_write.push_back(commands[buf]);
         }
     }
     std::ofstream outputFile("out.bin", std::ios::binary);

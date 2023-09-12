@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
+#include <filesystem>
 
 using byte = unsigned char;
 using word = unsigned short;
@@ -172,36 +173,40 @@ struct CPU
     }
 };
 
+void load(char *argv, MEM& memory)
+{
+    int addr = 0;
+    FILE* f = fopen(argv, "rb");
+    fseek(f, 0, SEEK_END);
+    size_t file_size = ftell(f);
+    rewind(f);
+    fread(&memory.memory[addr], sizeof(uint8_t), file_size, f);
+}
 
-int main()
+int main(int argc, char *argv[])
 {
     MEM mem;
     CPU cpu;
 
     cpu.reset();
     mem.init();
+
+    if (argc > 1)
+    {
+        if (std::filesystem::exists(argv[1]) == true)
+            load(argv[1], mem);
+        else
+        {
+            std::cout << "\x1B[91mError: el archivo no existe\033[0m\t\t" << std::endl;
+            return -1;
+        }
+    }
+
     cpu.A = 'A';
     cpu.B = 0xFE;
     cpu.C = 0x01;
 
-
-    mem.memory[0] = 0x01;
-    mem.memory[1] = 0xEF;
-    mem.memory[2] = 0x14;// LXI B EF20H
-    mem.memory[3] = 0x11;
-    mem.memory[4] = 0xFF;
-    mem.memory[5] = 0xAA;// LXI D FFAAH 
-    mem.memory[6] = 0x21;
-    mem.memory[7] = 0xBC;
-    mem.memory[8] = 0xFF;// LXI H BCFFH
-    mem.memory[9] = 0x31;
-    mem.memory[10] = 0xFF;
-    mem.memory[11] = 0xFF;// LXI SP 31CCH
-    mem.memory[12] = 0x03;// INX B
-    mem.memory[13] = 0x13;//INX D
-    mem.memory[14] = 0x23;//INX H
-    mem.memory[15] = 0x33;//INX SP
-    cpu.execute(mem, 50);
+    cpu.execute(mem, 60);
 
     std::cout << "Registry breakdown: " << std::endl;
     std::cout << "Accumulator: " << (int)cpu.A << std::endl;
