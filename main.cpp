@@ -66,7 +66,8 @@ struct CPU
 
     void execute(MEM& memory, u32 cycles)
     {
-        while (cycles > 0)
+        bool exe = true;
+        while (exe == true)
         {
             byte instruction = fetch(memory);
             byte u16L;
@@ -168,6 +169,10 @@ struct CPU
                     cycles -= 10;
                     break;
                 
+                case 0:
+                    exe = false;
+                    break;
+
                 default:
                     break;
             }
@@ -191,7 +196,6 @@ int main(int argc, char *argv[])
     CPU cpu;
 
     cpu.reset();
-    mem.init();
 
     if (argc > 1)
     {
@@ -206,7 +210,7 @@ int main(int argc, char *argv[])
 
     cpu.A = 0x03;
 
-    cpu.execute(mem, 32);
+    cpu.execute(mem, 0);
 
     std::cout << "Registry breakdown: " << std::endl;
     std::cout << "Accumulator: " << (int)cpu.A << std::endl;

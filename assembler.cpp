@@ -12,6 +12,9 @@
 std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"STAX B", 0x02}, {"INX B", 0x03}, {"LXI D", 0x11}, {"STAX D", 0x12}, {"INX D", 0x13},
 {"LXI H", 0x21}, {"INX H", 0x23},{"LXI SP", 0x31}, {"INX SP", 0x33}};
 
+std::map<std::string, uint16_t> symbolTable;
+uint16_t currentAddress = 0x1000;
+
 bool isNumber(std::string a)
 {
     for (int i = 0; i < a.length(); i++)
@@ -110,6 +113,11 @@ std::vector<std::string> tokenize(std::string result, char separator = ' ')
     return tokens;
 }
 
+void processLabel(const std::string& label) 
+{
+    symbolTable.insert({label, currentAddress});
+    currentAddress++;
+}
 
 int main(int argc, char *argv[])
 {
@@ -130,43 +138,55 @@ int main(int argc, char *argv[])
     std::ifstream infile(argv[1]);
     std::string head;
     while (std::getline(infile, buf))
-    {
+    {   
+        int index = 0;
         std::vector<std::string> valores = tokenize(buf);
 
-        if (valores.size() < 2)
+        if (valores.size() < 2 && valores.size() != 0)
         {
             std::cout << "\x1B[91mError: no suficientes argumentos\033[0m\t\t" << std::endl;
             return -1;
         }
-
-        if (commands.contains(valores[0]))
+        if (valores.size() == 0)
+            continue;
+        if (valores[index].back() == ':')
         {
-            std::string comm;
-            if (commands[valores[0]] == 0x01)
-                comm = std::format("{} {}", valores[0], valores[1]);
-            else
-                comm = valores[0];
-            
-            if (commands.contains(comm))
+            processLabel(valores[index]);
+            index++;
+        }
+        if (commands.contains(valores[index]))
+        {
+            index++;
+            if (valores[index].contains(','))
             {
-                to_write.push_back(commands[comm]);
-            }
-            if (valores.size() > 2)
-            {
-                if (valores[2].back() == 'H')
+                std::vector<std::string> val = tokenize(valores[index], ',');
+                std::string command = std::format("{} {}", valores[index - 1], val[0]);
+                if (val[1].back() == 'H')
                 {
-                    valores[2].pop_back();
-                    std::string half = valores[2].substr(0, valores[2].length() / 2);
-                    std::string otherHalf = valores[2].substr(valores[2].length() / 2);
+                    val[1].pop_back();
+                    std::string half = val[1].substr(0, val[1].length() / 2);
+                    std::string otherHalf = val[1].substr(val[1].length() / 2);
                     
                     if (isNumber(half) && isNumber(otherHalf)) 
                     {
                         unsigned int result = std::stoul(half, nullptr, 16);
                         unsigned int result2 = std::stoul(otherHalf, nullptr, 16);
                         
-                        to_write.push_back(static_cast<char>(result));
-                        to_write.push_back(static_cast<char>(result2));
+                        if (commands.contains(command))
+                        {
+                            to_write.push_back(commands[command]);
+                            to_write.push_back(static_cast<char>(result));
+                            to_write.push_back(static_cast<char>(result2));
+                        }
                     } 
+                }
+            }
+            else
+            {
+                std::string command = std::format("{} {}", valores[index - 1], valores[index]);
+                if (commands.contains(command))
+                {
+                    to_write.push_back(commands[command]);
                 }
             }
         }
