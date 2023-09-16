@@ -14,6 +14,7 @@ std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"STAX B
 
 std::map<std::string, uint16_t> symbolTable;
 uint16_t currentAddress = 0x1000;
+uint16_t writeAddress = 0x0000;
 
 bool isNumber(std::string a)
 {
@@ -113,10 +114,81 @@ std::vector<std::string> tokenize(std::string result, char separator = ' ')
     return tokens;
 }
 
-void processLabel(const std::string& label) 
+void assemble(std::vector<char> &to_write, std::vector<std::string> valores, int index, std::string buf = "", uint16_t mode = 0)
+{
+    uint16_t start_pos;
+    if (mode == (uint16_t)0)
+        start_pos = writeAddress;
+    else
+        start_pos = currentAddress;
+    if (commands.contains(valores[index]))
+    {
+        index++;
+        if (valores[index].contains(','))
+        {
+            std::vector<std::string> val = tokenize(valores[index], ',');
+            std::string command = std::format("{} {}", valores[index - 1], val[0]);
+            if (val[1].back() == 'H')
+            {
+                val[1].pop_back();
+                std::string half = val[1].substr(0, val[1].length() / 2);
+                std::string otherHalf = val[1].substr(val[1].length() / 2);
+                
+                if (isNumber(half) && isNumber(otherHalf)) 
+                {
+                    unsigned int result = std::stoul(half, nullptr, 16);
+                    unsigned int result2 = std::stoul(otherHalf, nullptr, 16);
+                    
+                    if (commands.contains(command) && (start_pos == to_write.size() || to_write.empty()))
+                    {
+                        to_write.push_back(commands[command]);
+                        to_write.push_back(static_cast<char>(result));
+                        to_write.push_back(static_cast<char>(result2));
+                        start_pos += 3;
+                    }
+                    else if(commands.contains(command))
+                    {
+                        to_write[start_pos++] = commands[command];
+                        to_write[start_pos++] = static_cast<char>(result);
+                        to_write[start_pos++] = static_cast<char>(result2);
+                    }
+                } 
+            }
+        }
+        else
+        {
+            std::string command = std::format("{} {}", valores[index - 1], valores[index]);
+            if (commands.contains(command) && (start_pos == to_write.size() || to_write.empty()))
+            {
+                to_write.push_back(commands[command]);
+            }
+            else if(commands.contains(command))
+            {
+                to_write[start_pos] = commands[command];
+                start_pos++;
+            } 
+        }
+    }
+    else if (buf.empty() != true && commands.contains(buf))
+    {
+        to_write.push_back(commands[buf]);
+    }
+    if (mode == 0)
+        writeAddress = start_pos;
+    else
+        currentAddress = start_pos;
+}
+
+void processLabel(const std::string& label, std::vector<char> &to_write, std::vector<std::string> valores) 
 {
     symbolTable.insert({label, currentAddress});
-    currentAddress++;
+    if (to_write.size() < currentAddress)
+    {
+        int index = 1;
+        to_write.resize(currentAddress);
+        assemble(to_write, valores, index, "", 1);
+        std::cout << to_write.size() << " " << index << currentAddress << std::endl;  
+    }
 }
 
 int main(int argc, char *argv[])
@@ -151,49 +223,11 @@ int main(int argc, char *argv[])
             continue;
         if (valores[index].back() == ':')
         {
-            processLabel(valores[index]);
+            processLabel(valores[index], to_write, valores);
             index++;
+            continue;
         }
-        if (commands.contains(valores[index]))
-        {
-            index++;
-            if (valores[index].contains(','))
-            {
-                std::vector<std::string> val = tokenize(valores[index], ',');
-                std::string command = std::format("{} {}", valores[index - 1], val[0]);
-                if (val[1].back() == 'H')
-                {
-                    val[1].pop_back();
-                    std::string half = val[1].substr(0, val[1].length() / 2);
-                    std::string otherHalf = val[1].substr(val[1].length() / 2);
-                    
-                    if (isNumber(half) && isNumber(otherHalf)) 
-                    {
-                        unsigned int result = std::stoul(half, nullptr, 16);
-                        unsigned int result2 = std::stoul(otherHalf, nullptr, 16);
-                        
-                        if (commands.contains(command))
-                        {
-                            to_write.push_back(commands[command]);
-                            to_write.push_back(static_cast<char>(result));
-                            to_write.push_back(static_cast<char>(result2));
-                        }
-                    } 
-                }
-            }
-            else
-            {
-                std::string command = std::format("{} {}", valores[index - 1], valores[index]);
-                if (commands.contains(command))
-                {
-                    to_write.push_back(commands[command]);
-                }
-            }
-        }
-        else if (commands.contains(buf))
-        {
-            to_write.push_back(commands[buf]);
-        }
+        assemble(to_write, valores, 0, buf);
     }
     std::ofstream outputFile("out.bin", std::ios::binary);
     for (unsigned int i = 0; i < to_write.size(); i++)
