@@ -9,7 +9,7 @@
 #include <format>
 #include <iomanip>
 
-std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"STAX B", 0x02}, {"INX B", 0x03}, {"LXI D", 0x11}, {"STAX D", 0x12}, {"INX D", 0x13},
+std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"STAX B", 0x02}, {"INX B", 0x03}, {"INR B", 0x04}, {"LXI D", 0x11}, {"STAX D", 0x12}, {"INX D", 0x13},
 {"LXI H", 0x21}, {"INX H", 0x23},{"LXI SP", 0x31}, {"INX SP", 0x33}};
 
 std::map<std::string, uint16_t> symbolTable;
@@ -171,7 +171,15 @@ void assemble(std::vector<char> &to_write, std::vector<std::string> valores, int
     }
     else if (buf.empty() != true && commands.contains(buf))
     {
-        to_write.push_back(commands[buf]);
+        if (commands.contains(buf) && (start_pos == to_write.size() || to_write.empty()))
+        {
+            to_write.push_back(commands[buf]);
+            start_pos++;
+        }
+        else if(commands.contains(buf))
+        {
+            to_write[start_pos++] = commands[buf];
+        }
     }
     if (mode == 0)
         writeAddress = start_pos;

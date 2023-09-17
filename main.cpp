@@ -56,6 +56,7 @@ struct CPU
         INS_LXI_B = 0x01,
         INS_STAX_B = 0x02,
         INS_INX_B = 0x03,
+        INS_INR_B = 0x04,
         INS_LXI_D = 0x11,
         INS_STAX_D = 0x12,
         INS_INX_D = 0x13,
@@ -104,6 +105,13 @@ struct CPU
                     cycles -= 5;
                     break;
                 
+                case INS_INR_B:
+                    if (B == 0xFF)
+                        B = 0x00;
+                    else
+                        B++;
+                    //TODO: add flags
+
                 case INS_INX_D:
                     if (E == 0xFF)
                     {
