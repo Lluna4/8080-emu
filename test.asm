@@ -4,3 +4,5 @@ STAX D
 
 test: LXI B,FFFBH
 
+LXI H,DDDDH
+INR B
