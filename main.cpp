@@ -35,6 +35,7 @@ struct CPU
 
     //registers
     byte A, B, C, D, E, H, L;
+    bool sign : 1, zero : 1, parity : 1, carry : 1, aux : 1;
 
     //Flag
     byte F; 
@@ -60,10 +61,13 @@ struct CPU
         INS_LXI_D = 0x11,
         INS_STAX_D = 0x12,
         INS_INX_D = 0x13,
+        INS_INR_D = 0x14,
         INS_LXI_H = 0x21,
         INS_INX_H = 0x23,
+        INS_INR_H = 0x24,
         INS_LXI_SP = 0x31,
-        INS_INX_SP = 0x33;
+        INS_INX_SP = 0x33,
+        INS_INR_M = 0x34;
 
     void execute(MEM& memory, u32 cycles)
     {
@@ -71,6 +75,7 @@ struct CPU
         while (exe == true)
         {
             byte instruction = fetch(memory);
+            int index = 0;
             byte u16L;
             byte u16H;
 
@@ -107,10 +112,55 @@ struct CPU
                 
                 case INS_INR_B:
                     if (B == 0xFF)
+                    {
                         B = 0x00;
+                        carry = 1;
+                    }
                     else
                         B++;
-                    //TODO: add flags
+                    
+                    zero = (B == 0);
+                    parity = ((B % 2) == 0);
+                
+                case INS_INR_D:
+                    if (D == 0xFF)
+                    {
+                        D = 0x00;
+                        carry = 1;
+                    }
+                    else
+                        D++;
+                    zero = (D == 0);
+                    parity = ((D % 2) == 0);
+
+                case INS_INR_H:
+                    if (H == 0xFF)
+                    {
+                        H = 0x00;
+                        carry = 1;
+                    }
+                    else
+                        H++;
+                    zero = (H == 0);
+                    parity = ((H % 2) == 0);
+                
+                case INS_INR_M:
+                    while (true)
+                    {
+                        if (memory[index] == 0xFF)
+                        {
+                            index++;
+                            memory.memory[index] = 0x00;
+                            carry = 1;
+                        }
+                        else
+                        {
+                            memory.memory[index]++;
+                            break;
+                        } 
+                    }
+                    zero = (memory[index] == 0);
+                    parity = ((memory[index] % 2) == 0);
 
                 case INS_INX_D:
                     if (E == 0xFF)
