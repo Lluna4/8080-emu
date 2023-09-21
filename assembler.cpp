@@ -9,12 +9,13 @@
 #include <format>
 #include <iomanip>
 
-std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"STAX B", 0x02}, {"INX B", 0x03}, {"INR B", 0x04}, {"LXI D", 0x11}, {"STAX D", 0x12}, {"INX D", 0x13},
+std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"STAX B", 0x02}, {"INX B", 0x03}, {"INR", 0x04}, {"INR B", 0x04}, {"LXI D", 0x11}, {"STAX D", 0x12}, {"INX D", 0x13},
 {"INR D", 0x14} ,{"LXI H", 0x21}, {"INX H", 0x23}, {"INR H", 0x24},{"LXI SP", 0x31}, {"INX SP", 0x33}, {"INR M", 0x34}};
 
 std::map<std::string, uint16_t> symbolTable;
 uint16_t currentAddress = 0x1000;
 uint16_t writeAddress = 0x0000;
+bool label = false;
 
 bool isNumber(std::string a)
 {
@@ -161,6 +162,7 @@ void assemble(std::vector<char> &to_write, std::vector<std::string> valores, int
             if (commands.contains(command) && (start_pos == to_write.size() || to_write.empty()))
             {
                 to_write.push_back(commands[command]);
+                start_pos++;
             }
             else if(commands.contains(command))
             {
@@ -187,14 +189,14 @@ void assemble(std::vector<char> &to_write, std::vector<std::string> valores, int
         currentAddress = start_pos;
 }
 
-void processLabel(const std::string& label, std::vector<char> &to_write, std::vector<std::string> valores) 
+void processLabel(const std::string& label, std::vector<char> &to_write, std::vector<std::string> valores, std::string buf) 
 {
     symbolTable.insert({label, currentAddress});
     if (to_write.size() < currentAddress)
     {
         int index = 1;
         to_write.resize(currentAddress);
-        assemble(to_write, valores, index, "", 1);
+        assemble(to_write, valores, index, tokenize(buf, ':')[1], 1);
         std::cout << to_write.size() << " " << index << currentAddress << std::endl;  
     }
 }
@@ -231,11 +233,21 @@ int main(int argc, char *argv[])
             continue;
         if (valores[index].back() == ':')
         {
-            processLabel(valores[index], to_write, valores);
+            processLabel(valores[index], to_write, valores, buf);
             index++;
+            label = true;
+            continue;
+        }
+        if ((buf[0] == ' ' || buf[0] == '\t') && label == true)
+        {
+            size_t in = buf.find_first_not_of(" \t\n\r\f\v");
+            if (in != std::string::npos)
+                buf = buf.substr(in);
+            assemble(to_write, valores, index, buf, 1);
             continue;
         }
         assemble(to_write, valores, 0, buf);
+        label = false;
     }
     std::ofstream outputFile("out.bin", std::ios::binary);
     for (unsigned int i = 0; i < to_write.size(); i++)
@@ -243,6 +255,7 @@ int main(int argc, char *argv[])
         outputFile.write(&to_write[i], sizeof(to_write[i]));
     }
     outputFile.close();
+    std::cout << "Bytes written: " << currentAddress << std::endl;
 
     return 0;
 }
