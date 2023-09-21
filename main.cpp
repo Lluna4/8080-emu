@@ -69,7 +69,7 @@ struct CPU
         INS_INX_SP = 0x33,
         INS_INR_M = 0x34;
 
-    void execute(MEM& memory, u32 cycles)
+    void execute(MEM& memory, u32 cycles) 
     {
         bool exe = true;
         while (exe == true)
@@ -114,35 +114,38 @@ struct CPU
                     if (B == 0xFF)
                     {
                         B = 0x00;
-                        carry = 1;
+                        //carry = 1;
                     }
                     else
                         B++;
                     
-                    zero = (B == 0);
+                    zero = (B == 0x00);
                     parity = ((B % 2) == 0);
+                    break;
                 
                 case INS_INR_D:
                     if (D == 0xFF)
                     {
                         D = 0x00;
-                        carry = 1;
+                        //carry = 1;
                     }
                     else
                         D++;
                     zero = (D == 0);
                     parity = ((D % 2) == 0);
+                    break;
 
                 case INS_INR_H:
                     if (H == 0xFF)
                     {
                         H = 0x00;
-                        carry = 1;
+                        //carry = 1;
                     }
                     else
                         H++;
                     zero = (H == 0);
                     parity = ((H % 2) == 0);
+                    break;
                 
                 case INS_INR_M:
                     while (true)
@@ -151,7 +154,7 @@ struct CPU
                         {
                             index++;
                             memory.memory[index] = 0x00;
-                            carry = 1;
+                            //carry = 1;
                         }
                         else
                         {
@@ -161,6 +164,7 @@ struct CPU
                     }
                     zero = (memory[index] == 0);
                     parity = ((memory[index] % 2) == 0);
+                    break;
 
                 case INS_INX_D:
                     if (E == 0xFF)
@@ -265,9 +269,6 @@ int main(int argc, char *argv[])
             return -1;
         }
     }
-
-    cpu.A = 0x03;
-
     cpu.execute(mem, 0);
 
     std::cout << "Registry breakdown: " << std::endl;
@@ -280,6 +281,12 @@ int main(int argc, char *argv[])
     std::cout << "L: " << (int)cpu.L << std::endl;
     std::cout << "PC: " << cpu.PC << std::endl;
     std::cout << "SP: " << cpu.SP << std::endl;
+    std::cout << "Flags: " << std::endl;
+    std::cout << "Sign: " << (int)cpu.sign << std::endl;
+    std::cout << "Zero: " << (int)cpu.zero << std::endl;
+    std::cout << "Parity: " << (int)cpu.parity << std::endl;
+    std::cout << "Carry: " << (int)cpu.carry << std::endl;
+    std::cout << "aux: " << (int)cpu.aux << std::endl;
     
     return 0;
 }

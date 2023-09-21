@@ -10,7 +10,7 @@
 #include <iomanip>
 
 std::map<std::string, char> commands = {{"LXI", 0x01}, {"LXI B", 0x01}, {"STAX B", 0x02}, {"INX B", 0x03}, {"INR B", 0x04}, {"LXI D", 0x11}, {"STAX D", 0x12}, {"INX D", 0x13},
-{"LXI H", 0x21}, {"INX H", 0x23},{"LXI SP", 0x31}, {"INX SP", 0x33}};
+{"INR D", 0x14} ,{"LXI H", 0x21}, {"INX H", 0x23}, {"INR H", 0x24},{"LXI SP", 0x31}, {"INX SP", 0x33}, {"INR M", 0x34}};
 
 std::map<std::string, uint16_t> symbolTable;
 uint16_t currentAddress = 0x1000;
