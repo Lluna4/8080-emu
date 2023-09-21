@@ -20,13 +20,16 @@ jobs:
       run: mkdir output
     - name: make
       run: make
+      env:
+       CC:   gcc-13
+       CXX:  g++-13
     - name: test
       run: output/comp.out test.asm
       env:
-       CC:   gcc-10
-       CXX:  g++-10
+       CC:   gcc-13
+       CXX:  g++-13
     - name: test2
       run: output/emu.out out.bin
       env:
-       CC:   gcc-10
-       CXX:  g++-10
+       CC:   gcc-13
+       CXX:  g++-13
