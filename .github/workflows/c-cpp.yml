@@ -1,0 +1,23 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: create directory
+      run: mkdir output
+    - name: make
+      run: make
+    - name: test
+      run: output/comp.out test.asm
+    - name: test2
+      run: output/emu.out out.bin
