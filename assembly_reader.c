@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#define MAX_FILENAME_LENGTH 256
 
 int main(int argc, char *argv[])
 {
@@ -8,12 +10,19 @@ int main(int argc, char *argv[])
     char *buf;
     int write_file = 0;
     int silent = 0;
+    char output_name[MAX_FILENAME_LENGTH] = "output.txt";
     FILE *file;
 
     if (argc > 1)
     {
-        for (int i = 1; i < argc; i++)
+        if (access(argv[1], F_OK) != 0)
         {
+            printf("\x1B[91mError: The file doesn't exist\033[0m\t\t\n");
+            return -1;
+        }
+        for (int i = 2; i < argc; i++)
+        {
+            
             if (strcmp(argv[i], "-w") == 0)
                 write_file = 1;
             else if (strcmp(argv[i], "-s") == 0)
@@ -23,10 +32,34 @@ int main(int argc, char *argv[])
                 printf("Options:\n\t-w\n\t\tWrite output to a txt file (output.txt)\n\n\t-s\n\t\tSilent mode: There's no output in console\n\n");
                 return 0;
             }
+            else if (strcmp(argv[i], "-o") == 0)
+            {
+                if (argc < i + 2)
+                {
+                    printf("\x1B[91mError: Not enough arguments for output\033[0m\t\t\n");
+                    return -1;
+                }
+                if (access(argv[i+1], F_OK) != 0)
+                {
+                    strncpy(output_name, argv[i+1], strlen(argv[i+1]) + 1);
+                    output_name[MAX_FILENAME_LENGTH - 1] = '\0';
+                    printf("(%s), (%s), (%i)", argv[i + 1], output_name, i);
+                }
+                else
+                {
+                    printf("\x1B[91mError: File already exists\033[0m\t\t\n");
+                    return -1;
+                }
+            }
         }
     }
+    else
+    {
+        printf("\x1B[91mError: Not enough arguments\033[0m\t\t\n");
+        return -1;
+    }
 
-    FILE* f = fopen("out.bin", "rb");
+    FILE* f = fopen(argv[1], "rb");
     fseek(f, 0, SEEK_END);
     size_t file_size = ftell(f);
     printf("%lu\n", file_size);
@@ -36,7 +69,7 @@ int main(int argc, char *argv[])
 
     size_t index = 0;
     if (write_file != 0)
-        file = fopen("output.txt", "w");
+        file = fopen(output_name, "w");
 
     while (index < file_size)
     {
