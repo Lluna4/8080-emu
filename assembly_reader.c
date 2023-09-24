@@ -22,16 +22,17 @@ int main(int argc, char *argv[])
         }
         for (int i = 2; i < argc; i++)
         {
-            
-            if (strcmp(argv[i], "-w") == 0)
-                write_file = 1;
-            else if (strcmp(argv[i], "-s") == 0)
-                silent = 1;
-            else if (strcmp(argv[i], "-h") == 0)
+            if (strcmp(argv[i], "-h") == 0)
             {
                 printf("Options:\n\t-w\n\t\tWrite output to a txt file (output.txt)\n\n\t-s\n\t\tSilent mode: There's no output in console\n\n");
                 return 0;
             }
+            if (strcmp(argv[i], "-w") == 0)
+                write_file = 1;
+            else if (strcmp(argv[i], "-s") == 0)
+                silent = 1;
+            else if (strcmp(argv[i], "-w") == 0)
+                write_file = 1;
             else if (strcmp(argv[i], "-o") == 0)
             {
                 if (argc < i + 2)
@@ -74,9 +75,15 @@ int main(int argc, char *argv[])
     while (index < file_size)
     {
         if (silent == 0)
-            printf("%02hhx ", buf[index]);
+            if (index % 0x0010 == 0)
+                printf("\n0x%04lx %02hhx ", index, buf[index]);
+            else
+                printf("%02hhx ", buf[index]);
         index++;
         if (write_file != 0)
-            fprintf(file, "%02hhx ", buf[index]);
+            if (index % 0x0010 == 0)
+                fprintf(file,"\n0x%04lx %02hhx ", index, buf[index]);
+            else
+                fprintf(file,"%02hhx ", buf[index]);
     }  
 }
