@@ -20,6 +20,11 @@ int main(int argc, char *argv[])
             printf("\x1B[91mError: The file doesn't exist\033[0m\t\t\n");
             return -1;
         }
+        if (strcmp(argv[1], "-h") == 0)
+        {
+            printf("Options:\n\t-w\n\t\tWrite output to a txt file (output.txt)\n\n\t-s\n\t\tSilent mode: There's no output in console\n\n");
+            return 0;
+        }
         for (int i = 2; i < argc; i++)
         {
             if (strcmp(argv[i], "-h") == 0)
