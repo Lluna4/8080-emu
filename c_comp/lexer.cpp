@@ -39,7 +39,7 @@ int main(int argc, char *a[])
             }
         }
     }
-    std::ifstream t(a[1]);
+    std::ifstream t("/home/luna/emucomp/c_comp/main.c");
     std::stringstream buffer;
     buffer << t.rdbuf();
     std::string b = buffer.str();
@@ -87,10 +87,16 @@ int main(int argc, char *a[])
             std::string ret = containsprotectedchar(aaaa[i]);
             to.push_back({T_VAR_NAME, ret});
             var_name = false;
+            if (aaaa[i + 1][0] == '=')
+                to.push_back({T_VAR_VALUE, aaaa[i + 2]});
         }
         if (aaaa[i].compare("int") == 0)
         {
             to.push_back({T_INT, aaaa[i]});
+            if (!aaaa[i + 1].contains("main"))
+            {
+                var_name = true;
+            }
         }
         if(aaaa[i].contains("main"))
         {
@@ -135,7 +141,7 @@ int main(int argc, char *a[])
             std::cout << to[i].code << std::endl;
         }
     }
-
+    
     std::vector<struct func> parsed = parsee(to);
 
     if (show_parser)
@@ -144,9 +150,12 @@ int main(int argc, char *a[])
         {
             std::cout << "FUNCTION: " << parsed[0].name << std::endl;
             std::cout << "   args: "  << "(" << parsed[0].args[0].value << ")" << std::endl;
+            for (int j = 0; j < parsed[0].variables.size(); j++)
+                std::cout << "   variable: " << "id: " << parsed[0].variables[j].identifier << " value: " << parsed[0].variables[j].value << std::endl;
             std::cout << "   return: type: " << parsed[0].return_type << " value: " << parsed[0].return_thing.return_num << std::endl;
         }
     }
+
     code_gen(parsed);
     char *aa[] = {(char *)"test", (char *)"output.asm"};
     start_assemble(2, aa);
